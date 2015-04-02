@@ -1,0 +1,169 @@
+{% load url from future %}
+{% load rest_framework %}
+<!DOCTYPE html>
+<html>
+    <head>
+    {% block head %}
+
+        {% block meta %}
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0,  user-scalable=0;" name="viewport" />
+        <meta name="电脑控制端" content="远程控制" />
+        {% endblock %}
+
+        <title>{% block title %}远程控制{% endblock %}</title>
+
+        {% block style %}
+        {% block bootstrap_theme %}
+            <link rel="stylesheet" type="text/css" href="{% static "demo/css/bootstrap-3.3.css" %}"/>
+
+        {% endblock %}
+        	<link rel="stylesheet" type="text/css" href="{% static "demo/css/default.css" %}"/>
+        {% endblock %}
+
+    {% endblock %}
+
+     <style type="text/css">             
+            .content{
+				padding:10px;
+				margin: 0 auto;
+				text-align: center;
+				color: #468847;
+				background-color: #dff0d8;
+				border: 1px solid #d6e9c6;
+				} 
+    </style>
+	 	 
+    </head>
+
+	<body class="{% block bodyclass %}{% endblock %} container">
+	  	
+	  	<div class="content">
+	  	
+	  		<div class="row">
+	  			<h1>{% block branding %}操作中心{% endblock %}</h1>
+	  		</div>
+			  		
+		  	{% if close_form %}
+				<div class="row">    
+				    <div class="col-xs-12">
+				    	<h5 class="form-signin-heading text-left">欢迎,{{username}}</h5>
+				        <div class="input-group" role="after" id="inputdeiviceid">
+			  				<input type="text" placeholder="deviceid" class="form-control" id="formdeviceid">
+			  				<span class="input-group-btn">
+			        			<button class="btn btn-success" type="button" id="btngo">查看状态</button>
+			      			</span>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<label class="form-signin-heading text-left" id="form_heading" ></label>
+					<div class="btn-group-vertical col-xs-12" id="btn_group">	
+					        <button class="btn btn-lg btn-info" type="button" id="btn_open" onclick="rotateYDIV()" title="Make an OPEN request on the {{ name }} resource">打开</button>
+					        <button class="btn btn-lg btn-info" type="button" id="btn_close" title="Make an CLOSE request on the {{ name }} resource">关闭</button>			        
+				    </div>		      	
+				</div>
+				<div class ="row">
+					<div class="col-xs-12" style="text-align:left">
+						<h6 id="danger">删除所有设备,谨慎操作</h6>
+						<button class="btn btn-lg btn-danger col-xs-12" type="button" id="btn_delete">删除</button>				
+					</div>
+				</div>
+			 {% endif %}
+		</div>
+
+    {% block footer %}
+    {% endblock %}
+ 
+      
+    <script src="{% static "demo/js/jquery.min.js" %}"></script>
+    <script src="{% static "demo/js/bootstrap.min.js" %}"></script>
+	<script type="text/javascript"> 	 
+		$(document).ready(function(){
+		 	$("#btngo").click(function(){
+		 		deviceid=$("#formdeviceid").val()
+		 		$.get("/demo/getdevicestatus/?deviceid="+deviceid,function(data,status){
+	   				if (status == "success" && (data == "open" || data=="close")){	   				
+		   				$("#form_heading").text("设备 "+deviceid+" 的状态为: "+data);
+		   				$("button").attr("disabled",false);
+		   				comp=(data == "open")?$("#btn_open"):$("#btn_close");
+		   				comp.attr("disabled",true);
+		   			}	
+		   			else{
+		   				$("#form_heading").text("输入的ID不存在！");		   				
+		   			}
+	   			}); 
+			});
+		 	
+		 	$("#btn_open").click(function(){
+		 		deviceid=$("#formdeviceid").val()
+		 		if (deviceid==""){
+		 			$("#form_heading").text("设备ID不能为空");
+		 		}else{
+		 			$.get("/demo/setdevicestatus/?deviceid="+deviceid+"&cmd_flag=1",function(data,status){
+			 			if (status=="success" && data=="success"){
+			 				$("#form_heading").text("命令已经发送成功");
+			 			}else if(status=="success" && data=="failed"){
+			 				$("#form_heading").text("命令发送失败");
+			 			}else{
+			 				$("#form_heading").text(data);
+			 			}
+			 		})
+		 		}	
+		 	});
+		 	
+		 	$("#btn_close").click(function(){
+		 		deviceid=$("#formdeviceid").val()
+		 		if (deviceid==""){
+		 			$("#form_heading").text("设备ID不能为空");
+		 		}else{
+		 			$.get("/demo/setdevicestatus/?deviceid="+deviceid+"&cmd_flag=0",function(data,status){
+			 			if (status=="success" && data=="success"){
+			 				$("#form_heading").text("命令已经发送成功");
+			 			}else if(status=="success" && data=="failed"){
+			 				$("#form_heading").text("命令发送失败");
+			 			}else{
+			 				$("#form_heading").text(data);
+			 			}
+			 		}) 			
+		 		}
+		 	});
+		 	
+		 	$("#btn_delete").click(function(){
+		 		$.get("/demo/deteleAllDevice/",function(data,status){
+		 			if(data=="success"){
+		 				$("#danger").text("所有设备已经删除成功");
+		 			}else{
+		 				$("#danger").text(data);
+		 			}
+		 		});
+		 	})
+	 	})	 
+	 	
+
+var x,y,n=0,ny=0,rotINT,rotYINT
+
+function rotateYDIV()
+{
+y=document.getElementById("btn_open")
+clearInterval(rotYINT)
+rotYINT=setInterval("startYRotate()",10)
+}
+
+function startYRotate()
+{
+ny=ny+1
+y.style.transform="rotateY(" + ny + "deg)"
+y.style.webkitTransform="rotateY(" + ny + "deg)"
+y.style.OTransform="rotateY(" + ny + "deg)"
+y.style.MozTransform="rotateY(" + ny + "deg)"
+if (ny==180 || ny>=360)
+	{
+	clearInterval(rotYINT)
+	if (ny>=360){ny=0}
+	}
+}
+
+	 </script>
+	</body>
+</html>
